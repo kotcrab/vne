@@ -1,0 +1,54 @@
+group = 'com.kotcrab.vne'
+version = '0.0.1-SNAPSHOT'
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+
+    dependencies {
+        classpath "com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3"
+        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.5.3"
+    }
+}
+
+apply plugin: 'io.codearte.nexus-staging'
+
+allprojects {
+    apply plugin: "eclipse"
+    apply plugin: "idea"
+    apply plugin: "nebula.provided-base"
+    apply plugin: "nebula.optional-base"
+
+    ext {
+		appName = 'vne'
+        gdxVersion = '1.9.3'
+    }
+
+    repositories {
+        mavenCentral()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+    }
+}
+
+project(':runtime') {
+    apply plugin: "java"
+}
+
+nexusStaging {
+    packageGroup = "com.kotcrab"
+    username = ossrhUsername
+    password = ossrhPassword
+}
+
+tasks.eclipse.doLast {
+    delete ".project"
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.13'
+}
+

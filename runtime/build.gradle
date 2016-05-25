@@ -1,0 +1,24 @@
+apply plugin: "java"
+apply plugin: 'maven'
+apply from: '../deploy.gradle'
+
+archivesBaseName = "vne-runtime"
+sourceCompatibility = 1.6
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+eclipse.project {
+    name = appName + "-ui"
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            pom.project {
+                name 'vne-runtime'
+                artifactId 'vne-runtime'
+                packaging 'jar'
+                description 'Runtime for VNE'
+            }
+        }
+    }
+}
