@@ -23,7 +23,7 @@ allprojects {
     apply plugin: "nebula.optional-base"
 
     ext {
-		appName = 'vne'
+        appName = 'vne'
         gdxVersion = '1.9.3'
     }
 
@@ -36,6 +36,18 @@ allprojects {
 
 project(':runtime') {
     apply plugin: "java"
+
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version: '4.11'
+    }
+}
+
+project(':win-thumbnails') {
+    apply plugin: "java"
+
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version: '4.11'
+    }
 }
 
 nexusStaging {
