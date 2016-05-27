@@ -1,5 +1,4 @@
 group = 'com.kotcrab.vne'
-version = '0.0.1-SNAPSHOT'
 
 buildscript {
     repositories {
@@ -22,9 +21,11 @@ allprojects {
     apply plugin: "nebula.provided-base"
     apply plugin: "nebula.optional-base"
 
+    group = 'com.kotcrab.vne'
+    version = '0.0.1-SNAPSHOT'
+
     ext {
         appName = 'vne'
-        gdxVersion = '1.9.3'
     }
 
     repositories {
@@ -46,6 +47,7 @@ project(':win-thumbnails') {
     apply plugin: "java"
 
     dependencies {
+        compile project(":runtime")
         testCompile group: 'junit', name: 'junit', version: '4.11'
     }
 }
