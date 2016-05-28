@@ -18,9 +18,9 @@ JNIEXPORT void JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProvider_
 /*
  * Class:     com_kotcrab_vne_win_thumbnails_WinThumbnailProvider
  * Method:    getThumbnailJni
- * Signature: (Ljava/lang/String;I)Z
+ * Signature: (Ljava/lang/String;I)[I
  */
-JNIEXPORT jboolean JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProvider_getThumbnailJni
+JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProvider_getThumbnailJni
   (JNIEnv *, jobject, jstring, jint);
 
 /*
