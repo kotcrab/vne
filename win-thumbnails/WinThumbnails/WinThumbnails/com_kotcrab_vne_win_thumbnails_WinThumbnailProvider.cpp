@@ -7,7 +7,11 @@
 #include <shobjidl.h>
 #include <thumbcache.h>
 
-LPCWSTR vnePathToWstr(const char * path)
+/* @author Kotcrab */
+
+jmethodID errorCallbackMethod;
+
+LPCWSTR vneCstrToWstr(const char * path)
 {
 	int wchars_num = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
 	wchar_t* wstr = new wchar_t[wchars_num];
@@ -15,18 +19,20 @@ LPCWSTR vnePathToWstr(const char * path)
 	return wstr;
 }
 
-void errorHandler(const char * errorMsg, HRESULT hr)
+void vneErrorHandler(JNIEnv * env, jobject obj, const char * errorMsg, HRESULT hr)
 {
-	printf("Error %ld: %s\n", hr, errorMsg);
+	jstring message = env->NewStringUTF(errorMsg);
+	env->CallVoidMethod(obj, errorCallbackMethod, message, hr);
+	env->DeleteLocalRef(message);
 }
 
-HRESULT createShellItem(LPCWSTR path, IShellItem** shellItemOut)
+HRESULT createShellItem(JNIEnv * env, jobject jobj, LPCWSTR path, IShellItem** shellItemOut)
 {
 	HRESULT hr;
 	LPITEMIDLIST pidl;
 	hr = SHParseDisplayName(path, NULL, &pidl, 0, NULL);
 	if (FAILED(hr)) {
-		errorHandler("SHParseDisplayName", hr);
+		vneErrorHandler(env, jobj, "SHParseDisplayName", hr);
 		return hr;
 	}
 
@@ -34,7 +40,7 @@ HRESULT createShellItem(LPCWSTR path, IShellItem** shellItemOut)
 	hr = SHCreateItemFromIDList(pidl, IID_IShellItem, (void**)&shellItem);
 	ILFree(pidl); //pidl is PCIDLIST_ABSOLUTE which needs manual free
 	if (FAILED(hr)) {
-		errorHandler("SHCreateItemFromIDList", hr);
+		vneErrorHandler(env, jobj, "SHCreateItemFromIDList", hr);
 		return hr;
 	}
 	*shellItemOut = shellItem;
@@ -43,21 +49,29 @@ HRESULT createShellItem(LPCWSTR path, IShellItem** shellItemOut)
 
 JNIEXPORT void JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProvider_initJni(JNIEnv * env, jobject jobj) {
 	CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+	jclass jclazz = env->GetObjectClass(jobj);
+	errorCallbackMethod = env->GetMethodID(jclazz, "jniErrorCallback", "(Ljava/lang/String;J)V");
+}
+
+JNIEXPORT void JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProvider_disposeJni(JNIEnv * env, jobject jobj) {
+	CoUninitialize();
+	errorCallbackMethod = NULL;
 }
 
 JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProvider_getThumbnailJni(JNIEnv * env, jobject jobj, jstring jpath, jint jsize) {
 	const char *str = env->GetStringUTFChars(jpath, NULL);
-	LPCWSTR path = vnePathToWstr(str);
+	LPCWSTR path = vneCstrToWstr(str);
 	env->ReleaseStringUTFChars(jpath, str);
 
 	HRESULT hr;
 
 	// Obtain IShellItem from path
 	IShellItem* shellItem;
-	hr = createShellItem(path, &shellItem);
+	hr = createShellItem(env, jobj, path, &shellItem);
 	if (FAILED(hr))
 	{
-		return NULL; //errors already handlded
+		return NULL; //errors already handled
 	}
 
 	// Obtain IThumbnailCache interface
@@ -65,7 +79,7 @@ JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProv
 	hr = CoCreateInstance(CLSID_LocalThumbnailCache, NULL, CLSCTX_INPROC_SERVER, IID_IThumbnailCache, (void**)&pTC);
 	if (FAILED(hr))
 	{
-		errorHandler("CoCreateInstance ThumbnailCache", hr);
+		vneErrorHandler(env, jobj, "CoCreateInstance ThumbnailCache", hr);
 		shellItem->Release();
 		return NULL;
 	}
@@ -76,7 +90,7 @@ JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProv
 	shellItem->Release();
 	if (FAILED(hr)) {
 		pTC->Release();
-		errorHandler("Thumbnail extract error", hr);
+		vneErrorHandler(env, jobj, "Thumbnail extract error", hr);
 		return NULL;
 	}
 
@@ -86,7 +100,7 @@ JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProv
 	if (FAILED(hr)) {
 		pTC->Release();
 		ppvThumb->Release();
-		errorHandler("Bitmap extract error", hr);
+		vneErrorHandler(env, jobj, "Bitmap extract error", hr);
 		return NULL;
 	}
 
@@ -102,7 +116,7 @@ JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProv
 		pTC->Release();
 		ppvThumb->Release();
 		ReleaseDC(hwnd, hdc);
-		errorHandler("BITMAPINFO extract", hr);
+		vneErrorHandler(env, jobj, "BITMAPINFO extract", hr);
 		return NULL;
 	}
 
@@ -120,7 +134,7 @@ JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProv
 		pTC->Release();
 		ppvThumb->Release();
 		ReleaseDC(hwnd, hdc);
-		errorHandler("Pixels extract", hr);
+		vneErrorHandler(env, jobj, "Pixels extract", hr);
 		return NULL;
 	}
 
@@ -149,7 +163,7 @@ JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProv
 	delete[] pixelBuffer;
 
 	jintArray jcolors = env->NewIntArray(colorBufferSize);
-	if (jcolors == NULL) return NULL; //Out of memory occured
+	if (jcolors == NULL) return NULL; //Out of memory occurred
 	env->SetIntArrayRegion(jcolors, 0, colorBufferSize, colorBuffer);
 
 	delete[] colorBuffer;
@@ -159,8 +173,4 @@ JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProv
 	ReleaseDC(hwnd, hdc);
 
 	return jcolors;
-}
-
-JNIEXPORT void JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProvider_disposeJni(JNIEnv * env, jobject jobj) {
-	CoUninitialize();
 }

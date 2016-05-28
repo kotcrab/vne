@@ -33,16 +33,15 @@ task generateJniHeaders(type: Exec) {
     dependsOn classes
 }
 
-task buildDll64(type: Exec) {
-    commandLine 'MSBuild', 'WinThumbnails/WinThumbnails.sln', '/property:Configuration=Release', '/property:Platform=x64'
-}
-
 task buildDll32(type: Exec) {
     commandLine 'MSBuild', 'WinThumbnails/WinThumbnails.sln', '/property:Configuration=Release', '/property:Platform=x86'
 }
 
+task buildDll64(type: Exec) {
+    commandLine 'MSBuild', 'WinThumbnails/WinThumbnails.sln', '/property:Configuration=Release', '/property:Platform=x64'
+}
+
 task copyDll(dependsOn: ['buildDll64', 'buildDll32']) << {
-//task copyDll(dependsOn: ['buildDll64']) << {
     copy {
         from 'WinThumbnails/Release/WinThumbnails.dll'
         into 'src/main/resources/win32/'
@@ -54,5 +53,7 @@ task copyDll(dependsOn: ['buildDll64', 'buildDll32']) << {
     }
 }
 
-compileJava.dependsOn copyDll
+task buildAndTest(dependsOn: ['buildDll64', 'copyDll', 'test']) << {
+
+}
 

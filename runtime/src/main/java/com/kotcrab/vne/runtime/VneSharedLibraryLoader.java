@@ -27,13 +27,12 @@ import java.util.zip.CRC32;
  * @author Kotcrab
  */
 public class VneSharedLibraryLoader {
+	private static final VneSharedLibraryLoader INSTANCE = new VneSharedLibraryLoader();
+
 	private static Set<String> loadedLibraries = new HashSet<String>();
 
-	public static VneSharedLibraryLoader newInstance () {
-		return new VneSharedLibraryLoader();
-	}
-
-	public VneSharedLibraryLoader () {
+	public static VneSharedLibraryLoader getInstance () {
+		return INSTANCE;
 	}
 
 	/** Returns a CRC of the remaining bytes in the stream. */

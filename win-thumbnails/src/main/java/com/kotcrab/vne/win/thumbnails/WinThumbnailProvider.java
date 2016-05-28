@@ -1,26 +1,28 @@
 package com.kotcrab.vne.win.thumbnails;
 
-import com.kotcrab.vne.runtime.VneSharedLibraryLoader;
+import com.kotcrab.vne.runtime.*;
 
 /**
  * Utility class for extracting images thumbnails. Uses Windows thumbnail to achieve very high performance and memory efficiency.
- * Note that you must load native library 'WinThumbnails.dll` before using this. Call ({@link VneSharedLibraryLoader#load(String)}
- * with {@link WinThumbnailProvider#SHARED_LIBRARY_NAME}
+ * By default errors messages are logged to console. Set {@link #setErrorHandler(VneErrorHandler)} to null to disable this.
  * @author Kotcrab
  */
-public class WinThumbnailProvider {
+public class WinThumbnailProvider extends VneLibrary {
 	public static final String SHARED_LIBRARY_NAME = "WinThumbnails";
-	private boolean initialized = false;
+	private boolean initialized;
 
-	/** Initialized required native resources. {@link #dispose()} must be called when this provider is no longer needed. */
-	public void init () {
-		//TODO ensure only on vista
-		//TODO improve VneSharedLibraryLoader loading process
-		//TODO move this to constructor
-
-		if (initialized) throw new IllegalStateException("Cannot initialize thumbnail provider twice");
+	/** Creates new thumbnail provider. {@link #dispose()} must be called when this provider is no longer needed. */
+	public WinThumbnailProvider () {
+		if (isPlatformSupported() == false)
+			throw new IllegalStateException("This class can't be used on current OS. Check #isPlatformSupported before creating.");
+		VneSharedLibraryLoader.getInstance().load(SHARED_LIBRARY_NAME);
+		setErrorHandler(new VneDefaultErrorHandler("WinThumbnailProvider"));
 		initJni();
 		initialized = true;
+	}
+
+	public static boolean isPlatformSupported () {
+		return VnePlatformUtils.isWindowsVistaOrLater();
 	}
 
 	/**
@@ -40,10 +42,17 @@ public class WinThumbnailProvider {
 		return getThumbnailJni(path, size);
 	}
 
-	/** Releases native resources. After calling this {@link #init()} must be called again to prepare native resources. */
+	/** Releases native resources. */
 	public void dispose () {
+		if (initialized == false) throw new IllegalStateException("Thumbnail provider was already disposed");
 		disposeJni();
 		initialized = false;
+	}
+
+	// Natives
+
+	private void jniErrorCallback (String msg, long errCode) {
+		handleError(msg, errCode);
 	}
 
 	private native void initJni ();
