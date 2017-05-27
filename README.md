@@ -1,7 +1,7 @@
 # vne
 Native extensions created for Vis project. Made to be modular as much as possible and can be used in any Java application.
 
-Current release version: 0.0.1
+Current release version: 1.0.0
 
 #### runtime
 Shared library loader, required by all extensions.
