@@ -44,12 +44,12 @@ uploadArchives {
             }
 
             pom.project {
-                url 'https://github.com/kotcrab/vis-editor/'
+                url 'https://github.com/kotcrab/vne/'
 
                 scm {
-                    connection 'scm:git:git@github.com:kotcrab/vis-editor.git'
-                    developerConnection 'scm:git:git@github.com:kotcrab/vis-editor.git'
-                    url 'git@github.com:kotcrab/vis-editor.git'
+                    connection 'scm:git:git@github.com:kotcrab/vne.git'
+                    developerConnection 'scm:git:git@github.com:kotcrab/vne.git'
+                    url 'git@github.com:kotcrab/vne.git'
                 }
 
                 licenses {

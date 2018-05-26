@@ -25,12 +25,12 @@ uploadArchives {
     }
 }
 
-task generateJniHeaders(type: Exec) {
-    def classpath = sourceSets.main.output.classesDir
+task generateJniHeaders(type: Exec, dependsOn: ['classes']) {
+    def classpath = sourceSets.main.output.classesDirs.asPath //+ ":" +
+    def runtimeClasspath = project(':runtime').sourceSets.main.output.classesDirs.asPath
+    def fullClasspath = classpath + File.pathSeparator + runtimeClasspath
     def nativeIncludes = "src/main/jni"
-    commandLine "javah", "-d", nativeIncludes, "-classpath", classpath, "com.kotcrab.vne.win.thumbnails.WinThumbnailProvider"
-
-    dependsOn classes
+    commandLine "javah", "-d", nativeIncludes, "-cp", fullClasspath, "com.kotcrab.vne.win.thumbnails.WinThumbnailProvider"
 }
 
 task buildDll32(type: Exec) {
@@ -41,19 +41,21 @@ task buildDll64(type: Exec) {
     commandLine 'MSBuild', 'WinThumbnails/WinThumbnails.sln', '/property:Configuration=Release', '/property:Platform=x64'
 }
 
-task copyDll(dependsOn: ['buildDll64', 'buildDll32']) << {
-    copy {
-        from 'WinThumbnails/Release/WinThumbnails.dll'
-        into 'src/main/resources/win32/'
-    }
+task copyDll(dependsOn: ['buildDll64', 'buildDll32']) {
+    doLast {
+        copy {
+            from 'WinThumbnails/Release/WinThumbnails.dll'
+            into 'src/main/resources/win32/'
+        }
 
-    copy {
-        from 'WinThumbnails/x64/Release/WinThumbnails.dll'
-        into 'src/main/resources/win64/'
+        copy {
+            from 'WinThumbnails/x64/Release/WinThumbnails.dll'
+            into 'src/main/resources/win64/'
+        }
     }
 }
 
-task buildAndTest(dependsOn: ['buildDll64', 'copyDll', 'test']) << {
-
+task buildAndTest(dependsOn: ['buildDll64', 'copyDll', 'test']) {
+    doLast {}
 }
 
