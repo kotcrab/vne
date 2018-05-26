@@ -1,3 +1,5 @@
+#### Version: 1.0.2-SNAPSHOT
+
 #### Version: 1.0.1
 - Fixed memory leak in `WinThumbnailProvider` 
 

@@ -31,7 +31,7 @@ public class WinThumbnailProvider extends VneLibrary {
 	 * @param path path for the image, '/' are replaced with Windows's '\\'.
 	 * @param size requested size for thumbnail. Note that the actual image dimensions may be different. Typically powers of
 	 * 2 are returned. Check returned array for actual image size.
-	 * @return abc First two elements of array are image width and height, remaining elements are thumbnails pixels packed
+	 * @return pixel array, first two elements of array are image width and height, remaining elements are thumbnails pixels packed
 	 * in RGBA8888 format. Returns null when path is longer than 255 characters, returns null when size is greater than 1024,
 	 * returns null when thumbnail extraction failed.
 	 */
