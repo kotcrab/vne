@@ -11,23 +11,20 @@
 
 jmethodID errorCallbackMethod;
 
-LPCWSTR vneCstrToWstr(const char * path)
-{
+LPCWSTR vneCstrToWstr(const char * path) {
 	int wchars_num = MultiByteToWideChar(CP_UTF8, 0, path, -1, NULL, 0);
 	wchar_t* wstr = new wchar_t[wchars_num];
 	MultiByteToWideChar(CP_UTF8, 0, path, -1, wstr, wchars_num);
 	return wstr;
 }
 
-void vneErrorHandler(JNIEnv * env, jobject obj, const char * errorMsg, HRESULT hr)
-{
+void vneErrorHandler(JNIEnv * env, jobject obj, const char * errorMsg, HRESULT hr) {
 	jstring message = env->NewStringUTF(errorMsg);
 	env->CallVoidMethod(obj, errorCallbackMethod, message, hr);
 	env->DeleteLocalRef(message);
 }
 
-HRESULT createShellItem(JNIEnv * env, jobject jobj, LPCWSTR path, IShellItem** shellItemOut)
-{
+HRESULT createShellItem(JNIEnv * env, jobject jobj, LPCWSTR path, IShellItem** shellItemOut) {
 	HRESULT hr;
 	LPITEMIDLIST pidl;
 	hr = SHParseDisplayName(path, NULL, &pidl, 0, NULL);
@@ -69,16 +66,15 @@ JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProv
 	// Obtain IShellItem from path
 	IShellItem* shellItem;
 	hr = createShellItem(env, jobj, path, &shellItem);
-	if (FAILED(hr))
-	{
+	delete path;
+	if (FAILED(hr)) {
 		return NULL; //errors already handled
 	}
 
 	// Obtain IThumbnailCache interface
 	IThumbnailCache* pTC;
 	hr = CoCreateInstance(CLSID_LocalThumbnailCache, NULL, CLSCTX_INPROC_SERVER, IID_IThumbnailCache, (void**)&pTC);
-	if (FAILED(hr))
-	{
+	if (FAILED(hr)) {
 		vneErrorHandler(env, jobj, "CoCreateInstance ThumbnailCache", hr);
 		shellItem->Release();
 		return NULL;
@@ -111,8 +107,7 @@ JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProv
 	bmInfo.bmiHeader.biSize = sizeof(bmInfo.bmiHeader);
 
 	// Extract BITMAPINFO structure from the bitmap
-	if (GetDIBits(hdc, hBitmap, 0, 0, NULL, &bmInfo, DIB_RGB_COLORS) == 0)
-	{
+	if (GetDIBits(hdc, hBitmap, 0, 0, NULL, &bmInfo, DIB_RGB_COLORS) == 0) {
 		pTC->Release();
 		ppvThumb->Release();
 		ReleaseDC(hwnd, hdc);
@@ -129,8 +124,7 @@ JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProv
 	bmInfo.bmiHeader.biHeight = abs(bmInfo.bmiHeader.biHeight); // correct the bottom-up ordering of lines
 
 	// Extract actual colors to buffer 
-	if (GetDIBits(hdc, hBitmap, 0, bmInfo.bmiHeader.biHeight, pixelBuffer, &bmInfo, DIB_RGB_COLORS) == 0)
-	{
+	if (GetDIBits(hdc, hBitmap, 0, bmInfo.bmiHeader.biHeight, pixelBuffer, &bmInfo, DIB_RGB_COLORS) == 0) {
 		pTC->Release();
 		ppvThumb->Release();
 		ReleaseDC(hwnd, hdc);
@@ -148,8 +142,7 @@ JNIEXPORT jintArray JNICALL Java_com_kotcrab_vne_win_thumbnails_WinThumbnailProv
 	colorBuffer[colorBufferIndex++] = bWidth;
 	colorBuffer[colorBufferIndex++] = bHeight;
 
-	for (DWORD i = 0; i < pixelBufferSize; i += 4)
-	{
+	for (DWORD i = 0; i < pixelBufferSize; i += 4) {
 		// GetDIBits returns colors in BGR format
 		BYTE blue = pixelBuffer[i];
 		BYTE green = pixelBuffer[i + 1];
